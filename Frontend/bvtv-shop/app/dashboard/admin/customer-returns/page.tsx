@@ -21,8 +21,12 @@ import {
     XCircle,
     Eye,
 } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function CustomerReturnsPage() {
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === "ADMIN";
+
     const [returns, setReturns] = useState<CustomerReturn[]>([]);
     const [products, setProducts] = useState<ProductUnit[]>([]);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -157,6 +161,11 @@ export default function CustomerReturnsPage() {
     };
 
     const handleApprove = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền duyệt phiếu");
+            return;
+        }
+
         if (!confirm("Phê duyệt phiếu trả hàng này?")) return;
         try {
             await api.post(`/customer-returns/${id}/approve`);
@@ -168,6 +177,11 @@ export default function CustomerReturnsPage() {
     };
 
     const handleReject = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền từ chối phiếu");
+            return;
+        }
+
         if (!confirm("Từ chối phiếu trả hàng này?")) return;
         try {
             await api.post(`/customer-returns/${id}/reject`);
@@ -179,21 +193,15 @@ export default function CustomerReturnsPage() {
     };
 
     const handleCancel = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền hủy phiếu");
+            return;
+        }
+
         if (!confirm("Hủy phiếu trả hàng này?")) return;
         try {
             await api.post(`/customer-returns/${id}/cancel`);
             alert("Hủy phiếu thành công!");
-            fetchData();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Có lỗi xảy ra!");
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (!confirm("Xóa phiếu trả hàng này?")) return;
-        try {
-            await api.delete(`/customer-returns/${id}`);
-            alert("Xóa thành công!");
             fetchData();
         } catch (error: any) {
             alert(error.response?.data?.message || "Có lỗi xảy ra!");
@@ -342,32 +350,33 @@ export default function CustomerReturnsPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                         {returnDoc.status ===
-                                            DocumentStatus.PENDING && (
-                                            <>
-                                                <button
-                                                    onClick={() =>
-                                                        handleApprove(
-                                                            returnDoc.id!
-                                                        )
-                                                    }
-                                                    className="text-green-600 hover:text-green-900"
-                                                    title="Phê duyệt"
-                                                >
-                                                    <Check className="w-4 h-4 inline" />
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleReject(
-                                                            returnDoc.id!
-                                                        )
-                                                    }
-                                                    className="text-red-600 hover:text-red-900"
-                                                    title="Từ chối"
-                                                >
-                                                    <XCircle className="w-4 h-4 inline" />
-                                                </button>
-                                            </>
-                                        )}
+                                            DocumentStatus.PENDING &&
+                                            isAdmin && (
+                                                <>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleApprove(
+                                                                returnDoc.id!
+                                                            )
+                                                        }
+                                                        className="text-green-600 hover:text-green-900"
+                                                        title="Phê duyệt"
+                                                    >
+                                                        <Check className="w-4 h-4 inline" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleReject(
+                                                                returnDoc.id!
+                                                            )
+                                                        }
+                                                        className="text-red-600 hover:text-red-900"
+                                                        title="Từ chối"
+                                                    >
+                                                        <XCircle className="w-4 h-4 inline" />
+                                                    </button>
+                                                </>
+                                            )}
                                         <button
                                             onClick={() =>
                                                 openDetailModal(returnDoc)
@@ -390,26 +399,20 @@ export default function CustomerReturnsPage() {
                                             </button>
                                         )}
                                         {returnDoc.status !==
-                                            DocumentStatus.CANCELLED && (
-                                            <button
-                                                onClick={() =>
-                                                    handleCancel(returnDoc.id!)
-                                                }
-                                                className="text-yellow-600 hover:text-yellow-900"
-                                                title="Hủy"
-                                            >
-                                                <X className="w-4 h-4 inline" />
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() =>
-                                                handleDelete(returnDoc.id!)
-                                            }
-                                            className="text-red-600 hover:text-red-900"
-                                            title="Xóa"
-                                        >
-                                            <Trash2 className="w-4 h-4 inline" />
-                                        </button>
+                                            DocumentStatus.CANCELLED &&
+                                            isAdmin && (
+                                                <button
+                                                    onClick={() =>
+                                                        handleCancel(
+                                                            returnDoc.id!
+                                                        )
+                                                    }
+                                                    className="text-yellow-600 hover:text-yellow-900"
+                                                    title="Hủy"
+                                                >
+                                                    <X className="w-4 h-4 inline" />
+                                                </button>
+                                            )}
                                     </td>
                                 </tr>
                             ))
@@ -713,7 +716,8 @@ export default function CustomerReturnsPage() {
                                                 (sum, item) =>
                                                     sum +
                                                     (item.quantity || 0) *
-                                                        (item.refundAmount || 0),
+                                                        (item.refundAmount ||
+                                                            0),
                                                 0
                                             ) || 0
                                         )}

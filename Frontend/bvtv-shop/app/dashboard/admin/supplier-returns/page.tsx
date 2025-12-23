@@ -21,8 +21,12 @@ import {
     XCircle,
     Eye,
 } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function SupplierReturnsPage() {
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === "ADMIN";
+
     const [returns, setReturns] = useState<SupplierReturn[]>([]);
     const [products, setProducts] = useState<ProductUnit[]>([]);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -166,6 +170,11 @@ export default function SupplierReturnsPage() {
     };
 
     const handleApprove = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền duyệt phiếu");
+            return;
+        }
+
         if (!confirm("Xác nhận duyệt phiếu trả hàng này?")) return;
         try {
             await api.post(`/supplier-returns/${id}/approve`);
@@ -181,6 +190,11 @@ export default function SupplierReturnsPage() {
     };
 
     const handleReject = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền từ chối phiếu");
+            return;
+        }
+
         const reason = prompt("Nhập lý do từ chối:");
         if (!reason) return;
         try {
@@ -197,25 +211,15 @@ export default function SupplierReturnsPage() {
     };
 
     const handleCancel = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền hủy phiếu");
+            return;
+        }
+
         if (!confirm("Xác nhận hủy phiếu trả hàng này?")) return;
         try {
             await api.post(`/supplier-returns/${id}/cancel`);
             alert("Đã hủy phiếu trả hàng!");
-            fetchData();
-        } catch (error: unknown) {
-            console.error("Error:", error);
-            alert(
-                (error as { response?: { data?: { message?: string } } })
-                    .response?.data?.message || "Có lỗi xảy ra!"
-            );
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (!confirm("Xác nhận xóa phiếu trả hàng này?")) return;
-        try {
-            await api.delete(`/supplier-returns/${id}`);
-            alert("Đã xóa phiếu trả hàng!");
             fetchData();
         } catch (error: unknown) {
             console.error("Error:", error);
@@ -386,30 +390,33 @@ export default function SupplierReturnsPage() {
                                                 <Eye className="w-4 h-4" />
                                             </button>
                                             {ret.status ===
-                                                DocumentStatus.PENDING && (
-                                                <>
-                                                    <button
-                                                        onClick={() =>
-                                                            handleApprove(
-                                                                ret.id
-                                                            )
-                                                        }
-                                                        className="text-green-600 hover:text-green-800"
-                                                        title="Duyệt"
-                                                    >
-                                                        <Check className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            handleReject(ret.id)
-                                                        }
-                                                        className="text-red-600 hover:text-red-800"
-                                                        title="Từ chối"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </>
-                                            )}
+                                                DocumentStatus.PENDING &&
+                                                isAdmin && (
+                                                    <>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleApprove(
+                                                                    ret.id
+                                                                )
+                                                            }
+                                                            className="text-green-600 hover:text-green-800"
+                                                            title="Duyệt"
+                                                        >
+                                                            <Check className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleReject(
+                                                                    ret.id
+                                                                )
+                                                            }
+                                                            className="text-red-600 hover:text-red-800"
+                                                            title="Từ chối"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                )}
                                             {(ret.status ===
                                                 DocumentStatus.DRAFT ||
                                                 ret.status ===
@@ -427,29 +434,31 @@ export default function SupplierReturnsPage() {
                                             {(ret.status ===
                                                 DocumentStatus.APPROVED ||
                                                 ret.status ===
-                                                    DocumentStatus.PENDING) && (
-                                                <button
-                                                    onClick={() =>
-                                                        handleCancel(ret.id)
-                                                    }
-                                                    className="text-yellow-600 hover:text-yellow-800"
-                                                    title="Hủy"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </button>
-                                            )}
+                                                    DocumentStatus.PENDING) &&
+                                                isAdmin && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleCancel(ret.id)
+                                                        }
+                                                        className="text-yellow-600 hover:text-yellow-800"
+                                                        title="Hủy"
+                                                    >
+                                                        <XCircle className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             {ret.status !==
-                                                DocumentStatus.APPROVED && (
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(ret.id)
-                                                    }
-                                                    className="text-red-600 hover:text-red-800"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            )}
+                                                DocumentStatus.APPROVED &&
+                                                isAdmin && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDelete(ret.id)
+                                                        }
+                                                        className="text-red-600 hover:text-red-800"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                         </div>
                                     </td>
                                 </tr>

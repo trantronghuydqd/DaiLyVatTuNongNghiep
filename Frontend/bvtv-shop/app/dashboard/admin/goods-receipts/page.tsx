@@ -12,8 +12,12 @@ import {
     Profile,
 } from "@/types";
 import { FileText, Plus, Edit, Trash2, Check, X, Eye } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function GoodsReceiptsPage() {
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === "ADMIN";
+
     const [receipts, setReceipts] = useState<GoodsReceipt[]>([]);
     const [products, setProducts] = useState<ProductUnit[]>([]);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -145,6 +149,11 @@ export default function GoodsReceiptsPage() {
     };
 
     const handleConfirm = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền xác nhận phiếu");
+            return;
+        }
+
         if (!confirm("Xác nhận phiếu nhập hàng này?")) return;
         try {
             await api.post(`/goods-receipts/${id}/confirm`);
@@ -156,21 +165,15 @@ export default function GoodsReceiptsPage() {
     };
 
     const handleCancel = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền hủy phiếu");
+            return;
+        }
+
         if (!confirm("Hủy phiếu nhập hàng này?")) return;
         try {
             await api.post(`/goods-receipts/${id}/cancel`);
             alert("Hủy phiếu thành công!");
-            fetchData();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Có lỗi xảy ra!");
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (!confirm("Xóa phiếu nhập hàng này?")) return;
-        try {
-            await api.delete(`/goods-receipts/${id}`);
-            alert("Xóa thành công!");
             fetchData();
         } catch (error: any) {
             alert(error.response?.data?.message || "Có lỗi xảy ra!");
@@ -376,17 +379,19 @@ export default function GoodsReceiptsPage() {
                                         {receipt.status ===
                                             DocumentStatus.DRAFT && (
                                             <>
-                                                <button
-                                                    onClick={() =>
-                                                        handleConfirm(
-                                                            receipt.id!
-                                                        )
-                                                    }
-                                                    className="text-blue-600 hover:text-blue-900"
-                                                    title="Xác nhận"
-                                                >
-                                                    <Check className="w-4 h-4 inline" />
-                                                </button>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleConfirm(
+                                                                receipt.id!
+                                                            )
+                                                        }
+                                                        className="text-blue-600 hover:text-blue-900"
+                                                        title="Xác nhận"
+                                                    >
+                                                        <Check className="w-4 h-4 inline" />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() =>
                                                         openEditModal(receipt)
@@ -399,26 +404,20 @@ export default function GoodsReceiptsPage() {
                                             </>
                                         )}
                                         {receipt.status !==
-                                            DocumentStatus.CANCELLED && (
-                                            <button
-                                                onClick={() =>
-                                                    handleCancel(receipt.id!)
-                                                }
-                                                className="text-yellow-600 hover:text-yellow-900"
-                                                title="Hủy"
-                                            >
-                                                <X className="w-4 h-4 inline" />
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() =>
-                                                handleDelete(receipt.id!)
-                                            }
-                                            className="text-red-600 hover:text-red-900"
-                                            title="Xóa"
-                                        >
-                                            <Trash2 className="w-4 h-4 inline" />
-                                        </button>
+                                            DocumentStatus.CANCELLED &&
+                                            isAdmin && (
+                                                <button
+                                                    onClick={() =>
+                                                        handleCancel(
+                                                            receipt.id!
+                                                        )
+                                                    }
+                                                    className="text-yellow-600 hover:text-yellow-900"
+                                                    title="Hủy"
+                                                >
+                                                    <X className="w-4 h-4 inline" />
+                                                </button>
+                                            )}
                                     </td>
                                 </tr>
                             ))
@@ -805,12 +804,14 @@ export default function GoodsReceiptsPage() {
                                             <input
                                                 type="number"
                                                 placeholder="SL"
-                                                value={item.quantity}
+                                                value={item.quantity || ""}
                                                 onChange={(e) =>
                                                     updateItem(
                                                         index,
                                                         "quantity",
-                                                        parseInt(e.target.value)
+                                                        parseInt(
+                                                            e.target.value
+                                                        ) || 1
                                                     )
                                                 }
                                                 className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"

@@ -66,7 +66,8 @@
 
 **Quản lý Kho:**
 
--   Xem tồn kho (`GET /api/warehouses/**`)
+-   Xem danh sách kho (`GET /api/warehouses/**`)
+-   Xem tồn kho (`GET /api/inventory-movements/**`)
 -   Nhập xuất kho (`POST/PUT /api/inventory-movements/**`)
 
 **Quản lý Mã giảm giá:**

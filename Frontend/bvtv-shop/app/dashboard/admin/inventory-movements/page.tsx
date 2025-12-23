@@ -8,8 +8,12 @@ import {
     ProductUnit,
     Warehouse,
 } from "@/types";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function InventoryMovementsPage() {
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === "ADMIN";
+
     const [movements, setMovements] = useState<InventoryMovement[]>([]);
     const [products, setProducts] = useState<ProductUnit[]>([]);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -123,6 +127,11 @@ export default function InventoryMovementsPage() {
     };
 
     const handleDelete = async (id: number) => {
+        if (!isAdmin) {
+            alert("Chỉ ADMIN mới có quyền xóa phiếu kho");
+            return;
+        }
+
         if (!confirm("Bạn có chắc chắn muốn xóa phiếu kho này?")) return;
 
         try {
@@ -325,14 +334,6 @@ export default function InventoryMovementsPage() {
                                             className="text-indigo-600 hover:text-indigo-900 mr-4"
                                         >
                                             Sửa
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                handleDelete(movement.id)
-                                            }
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            Xóa
                                         </button>
                                     </td>
                                 </tr>

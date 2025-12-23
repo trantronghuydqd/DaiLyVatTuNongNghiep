@@ -22,56 +22,67 @@ const menuItems = [
         label: "Tổng quan",
         href: "/dashboard/admin",
         icon: LayoutDashboard,
+        adminOnly: true, // Chỉ ADMIN
     },
     {
         label: "Sản phẩm",
         href: "/dashboard/admin/product-units",
         icon: Package,
+        adminOnly: true, // Chỉ ADMIN
     },
     {
         label: "Danh mục",
         href: "/dashboard/admin/categories",
         icon: Folder,
+        adminOnly: true, // Chỉ ADMIN
     },
     {
         label: "Mã giảm giá",
         href: "/dashboard/admin/coupons",
         icon: Ticket,
+        adminOnly: true, // Chỉ ADMIN
     },
     {
         label: "Khu vực",
         href: "/dashboard/admin/areas",
         icon: MapPin,
+        adminOnly: false, // STAFF + ADMIN
     },
     {
         label: "Khách hàng",
         href: "/dashboard/admin/profiles",
         icon: Users,
+        adminOnly: false, // STAFF + ADMIN
     },
     {
         label: "Đơn hàng",
         href: "/dashboard/admin/orders",
         icon: ShoppingCart,
+        adminOnly: false, // STAFF + ADMIN
     },
     {
         label: "Nhập xuất kho",
         href: "/dashboard/admin/inventory-movements",
         icon: ArrowLeftRight,
+        adminOnly: false, // STAFF + ADMIN
     },
     {
         label: "Phiếu nhập hàng",
         href: "/dashboard/admin/goods-receipts",
         icon: PackageCheck,
+        adminOnly: false, // STAFF + ADMIN
     },
     {
         label: "Phiếu trả hàng",
         href: "/dashboard/admin/customer-returns",
         icon: PackageX,
+        adminOnly: false, // STAFF + ADMIN
     },
     {
         label: "Phiếu trả NCC",
         href: "/dashboard/admin/supplier-returns",
         icon: PackageX,
+        adminOnly: false, // STAFF + ADMIN
     },
 ];
 
@@ -80,6 +91,11 @@ export default function AdminSidebar() {
     const { user, logout } = useAuthStore();
 
     if (!user) return null;
+
+    const isAdmin = user.role === "ADMIN";
+    const filteredMenuItems = menuItems.filter(
+        (item) => !item.adminOnly || isAdmin
+    );
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden sticky top-24">
@@ -105,7 +121,7 @@ export default function AdminSidebar() {
 
             {/* Navigation */}
             <div className="p-3 space-y-1">
-                {menuItems.map((item) => {
+                {filteredMenuItems.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
                     return (

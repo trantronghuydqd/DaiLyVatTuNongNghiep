@@ -143,8 +143,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/coupons/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/coupons/**").hasRole("ADMIN")
                 
-                // Warehouse management (ADMIN only)
-                .requestMatchers(HttpMethod.GET, "/api/warehouses/**").hasRole("ADMIN")
+                // Warehouse management - STAFF can view, only ADMIN can create/edit/delete
+                .requestMatchers(HttpMethod.GET, "/api/warehouses/**").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/warehouses/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/warehouses/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/warehouses/**").hasRole("ADMIN")

@@ -27,6 +27,7 @@ export default function ProfilesAdminPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
     const [formData, setFormData] = useState({
+        email: "",
         name: "",
         sortName: "",
         phone: "",
@@ -54,13 +55,8 @@ export default function ProfilesAdminPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!editingProfile) {
-            alert("Chỉ có thể sửa thông tin, không thể tạo user mới từ đây");
-            return;
-        }
-
         try {
-            const payload = {
+            const payload: any = {
                 name: formData.name,
                 sortName: formData.sortName,
                 phone: formData.phone,
@@ -69,14 +65,21 @@ export default function ProfilesAdminPage() {
                 isActive: formData.isActive,
             };
 
-            await api.put(`/profiles/${editingProfile.id}`, payload);
+            if (editingProfile) {
+                // Cập nhật người dùng hiện có
+                await api.put(`/profiles/${editingProfile.id}`, payload);
+            } else {
+                // Thêm người dùng mới (cần email)
+                payload.email = formData.email;
+                await api.post("/profiles", payload);
+            }
 
             setShowModal(false);
             resetForm();
             fetchProfiles();
         } catch (error) {
-            console.error("Lỗi khi cập nhật người dùng:", error);
-            alert("Có lỗi xảy ra khi cập nhật người dùng");
+            console.error("Lỗi khi lưu người dùng:", error);
+            alert("Có lỗi xảy ra khi lưu người dùng");
         }
     };
 
@@ -112,6 +115,7 @@ export default function ProfilesAdminPage() {
 
     const resetForm = () => {
         setFormData({
+            email: "",
             name: "",
             sortName: "",
             phone: "",
@@ -173,6 +177,15 @@ export default function ProfilesAdminPage() {
                 <h1 className="text-3xl font-bold text-gray-800">
                     Quản lý người dùng
                 </h1>
+                <button
+                    onClick={() => {
+                        resetForm();
+                        setShowModal(true);
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                    + Thêm người dùng
+                </button>
             </div>
 
             {/* Search & Filter */}
@@ -296,21 +309,46 @@ export default function ProfilesAdminPage() {
             </div>
 
             {/* Modal */}
-            {showModal && editingProfile && (
+            {showModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <h2 className="text-2xl font-bold mb-4">
-                            Sửa thông tin người dùng
+                            {editingProfile
+                                ? "Sửa thông tin người dùng"
+                                : "Thêm người dùng mới"}
                         </h2>
                         <form onSubmit={handleSubmit}>
-                            <div className="mb-4 p-3 bg-gray-50 rounded">
-                                <div className="text-sm text-gray-600">
-                                    Email:
+                            {editingProfile && (
+                                <div className="mb-4 p-3 bg-gray-50 rounded">
+                                    <div className="text-sm text-gray-600">
+                                        Email:
+                                    </div>
+                                    <div className="font-medium">
+                                        {editingProfile.email}
+                                    </div>
                                 </div>
-                                <div className="font-medium">
-                                    {editingProfile.email}
+                            )}
+
+                            {!editingProfile && (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-2">
+                                        Email *
+                                    </label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={formData.email || ""}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                email: e.target.value,
+                                            })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        placeholder="user@example.com"
+                                    />
                                 </div>
-                            </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="mb-4">
